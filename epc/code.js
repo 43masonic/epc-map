@@ -76,6 +76,8 @@ const DATA_VIEW = 'epc2021';
 const COMMENT_SERVER = 'https://api.sfcta.org/commapi/';
 const COMMENT_VIEW = 'epc_comment';
 
+const TOTAL_CITY_POPULATION_MTC =   870044  // from bayareametro.github.io/Spatial-Analysis-Mapping-Projects/Project-Documentation/Equity-Priority-Communities/
+
 const GEOTYPE = 'EPC';
 const GEOID_VAR = 'geoid';
 
@@ -172,6 +174,7 @@ let totalCityData = {}
 let barChart;
 let setDataToCityTotals
 let cityBarData = []
+let cityTotalEPCPop = 0
 
 
 async function fetchMapFeatures() {
@@ -199,6 +202,13 @@ async function fetchMapFeatures() {
       return retObj
     })
 
+    features.forEach(tract => {
+      cityTotalEPCPop+=tract.tot_pop
+    })
+    console.log(features[0])
+    console.debug('total city pop in EPCs:', cityTotalEPCPop)
+    console.log('There are', features.length, 'EPCs')
+
     cityBarData = [
       { y: 'Minority', pop: totalCityData['pop_minori'] || 0 },
       { y: 'Low Income', pop: totalCityData['pop_below2'] || 0 },
@@ -224,7 +234,10 @@ async function fetchMapFeatures() {
     setDataToCityTotals = () => {
       barChart.setData(cityBarData)
       document.getElementById('popchart_title').innerText = `POPULATION BREAKDOWN | CITYWIDE`
+      document.getElementById('total_city_pop').innerText = `Total equity priority community population across San Francisco: ${cityTotalEPCPop} (${Math.round(1000* (cityTotalEPCPop/TOTAL_CITY_POPULATION_MTC))/10}%)`
     }
+
+    setDataToCityTotals()
 
 
     return features;
@@ -595,6 +608,8 @@ function clickedOnFeature(e) {
 
   // Update title of chart section
   document.getElementById('popchart_title').innerText = `POPULATION BREAKDOWN | TRACT ${geo.tract}`
+
+  document.getElementById('total_city_pop').innerText = `Total population of tract: ${geo.tot_pop} (${Math.round(1000* (geo.tot_pop/cityTotalEPCPop))/10}% of city EPC population, ${Math.round(1000* (geo.tot_pop/TOTAL_CITY_POPULATION_MTC))/10}% of total city poulation)`
 
   // unselect the previously-selected selection, if there is one
   if (selectedGeo && selectedGeo.feature[GEOID_VAR] != geo[GEOID_VAR]) {
